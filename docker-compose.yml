@@ -1,0 +1,12 @@
+version: "3.5"
+services:
+  #  app:
+  #  build: .
+  #  network_mode: "host"
+  #  restart: always
+  db:
+    image: mongo
+    network_mode: "host"
+    environment:
+      - MONGO_INITDB_ROOT_USERNAME=root
+      - MONGO_INITDB_ROOT_PASSWORD=root

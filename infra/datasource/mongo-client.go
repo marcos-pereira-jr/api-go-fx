@@ -2,6 +2,7 @@ package datasource
 
 import (
 	"context"
+
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
@@ -17,7 +18,11 @@ func NewMongoConfig() *MongoConfig {
 }
 
 func NewMongoClient(cfg *MongoConfig) (*mongo.Client, error) {
-  client, err := mongo.Connect(context.Background(), options.Client().ApplyURI(cfg.URI))
+  credential := options.Credential{
+    Username: "root",
+    Password: "root",
+  }
+  client, err := mongo.Connect(context.Background(), options.Client().ApplyURI(cfg.URI).SetAuth(credential))
   if err != nil {
     return nil, err
   }
