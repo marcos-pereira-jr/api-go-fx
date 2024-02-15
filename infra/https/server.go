@@ -16,7 +16,6 @@ func NewServer(
 	lifecycle.Append(fx.Hook{
 		OnStart: func(context.Context) error {
 			go func() {
-
 				if err := router.Listen("localhost:8080"); err != nil {
 					fmt.Printf("Error starting the server: %s\n", err)
 				}

@@ -3,6 +3,8 @@ package datasource
 import "go.uber.org/fx"
 
 var Module = fx.Provide(
-  NewMongoClient,
-  NewMongoConfig,
-  )
+	NewMongoClient,
+	NewMongoConfig,
+	NewTransacaoRepository,
+	NewScripts,
+)

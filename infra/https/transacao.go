@@ -1,40 +1,38 @@
 package https
 
 import (
-	"context"
-	"fmt"
+	"errors"
+	"github.com/marcos-pereira-jr/rinha-go-fx/app"
+	"github.com/marcos-pereira-jr/rinha-go-fx/infra/datasource"
 
 	"github.com/gofiber/fiber/v2"
-	"go.mongodb.org/mongo-driver/bson"
-	"go.mongodb.org/mongo-driver/mongo"
 )
 
 type TransacaoRouter struct {
-  dbClient *mongo.Client 
+	repository *datasource.TransacaoRepository
 }
 
 func (p *TransacaoRouter) Load(r *fiber.App) {
-	r.Get("/actuator", func(c *fiber.Ctx) error {
-	coll := p.dbClient.Database("user").Collection("user")
-  fmt.Print("TEST")
-  _, err := coll.InsertOne(
-    context.TODO(),
-    bson.D{
-        {"animal", "Dog"},
-        {"breed", "Beagle"},
-    },
-  )
-    if(err != nil) {
-      fmt.Print("Erro",err);
-    }
-		return c.SendString("teste")
+	r.Post("/clientes/:id/transacoes", func(c *fiber.Ctx) error {
+		var body app.Transacao
+		if err := c.BodyParser(&body); err != nil {
+			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"erro": "bad request"})
+		}
+		err := p.repository.InsertTransaction(c.Params("id"), body)
+		if err != nil {
+			var notFound *app.ErrorApp
+			if errors.As(err, &notFound) {
+				return c.Status(fiber.StatusNotFound).Next()
+			}
+		}
+		return c.Status(fiber.StatusOK).JSON(fiber.Map{"ok": "true"})
 	})
 }
 
 func NewTransacaoRouter(
-  dbClient *mongo.Client,
+	repository *datasource.TransacaoRepository,
 ) *TransacaoRouter {
 	return &TransacaoRouter{
-    dbClient: dbClient,
-  }
+		repository: repository,
+	}
 }

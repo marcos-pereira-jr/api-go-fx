@@ -7,11 +7,14 @@ import (
 	"go.uber.org/fx"
 )
 
-func main(){
-  app := fx.New(
-    https.Module,
-    datasource.Module,
-    fx.Invoke(func(*fasthttp.Server){}),
-    )
-  app.Run()
+func main() {
+	app := fx.New(
+		https.Module,
+		datasource.Module,
+		fx.Invoke(func(*fasthttp.Server) {}),
+		fx.Invoke(func(scripts *datasource.Scripts) {
+			scripts.Run()
+		}),
+	)
+	app.Run()
 }
