@@ -2,6 +2,7 @@ package https
 
 import (
 	"errors"
+
 	"github.com/marcos-pereira-jr/rinha-go-fx/app"
 	"github.com/marcos-pereira-jr/rinha-go-fx/infra/datasource"
 
@@ -18,14 +19,30 @@ func (p *TransacaoRouter) Load(r *fiber.App) {
 		if err := c.BodyParser(&body); err != nil {
 			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"erro": "bad request"})
 		}
-		err := p.repository.InsertTransaction(c.Params("id"), body)
+		result, err := p.repository.InsertTransaction(c.Params("id"), body)
 		if err != nil {
 			var notFound *app.ErrorApp
 			if errors.As(err, &notFound) {
 				return c.Status(fiber.StatusNotFound).Next()
 			}
 		}
-		return c.Status(fiber.StatusOK).JSON(fiber.Map{"ok": "true"})
+		return c.Status(fiber.StatusOK).JSON(result)
+	})
+
+	r.Get("/clientes/:id/extrato", func(c *fiber.Ctx) error {
+		var body app.Transacao
+		if err := c.BodyParser(&body); err != nil {
+			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"erro": "bad request"})
+		}
+		result, err := p.repository.FindUser(c.Params("id"))
+		if err != nil {
+			var notFound *app.ErrorApp
+			if errors.As(err, &notFound) {
+				return c.Status(fiber.StatusNotFound).Next()
+			}
+		}
+
+		return c.Status(fiber.StatusOK).JSON(app.Extrair(result))
 	})
 }
 
