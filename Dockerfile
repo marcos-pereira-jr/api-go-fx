@@ -8,6 +8,7 @@ COPY go.* ./
 RUN go mod download
 
 COPY ./infra/ ./infra
+COPY ./app/ ./app
 COPY *.go ./
 
 RUN CGO_ENABLED=0 GOOS=linux go build -o /rinha-go-fx

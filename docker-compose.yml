@@ -1,12 +1,33 @@
 version: "3.5"
 services:
-  #  app:
-  #  build: .
-  #  network_mode: "host"
-  #  restart: always
+  app:
+    build: .
+    expose:
+      - "8080"
+    network_mode: "host"
+    restart: always
+    deploy:
+      resources:
+        limits:
+          cpus: "0.7"
+          memory: "1GB"
   db:
     image: mongo
     network_mode: "host"
     environment:
       - MONGO_INITDB_ROOT_USERNAME=root
-      - MONGO_INITDB_ROOT_PASSWORD=root
+      - MONGO_INITDB_ROOT_PASSWORD=root    
+  nginx:
+    image: nginx
+    hostname: api
+    network_mode: "host"
+    volumes:
+      - ./scripts/nginx/:/etc/nginx/
+    expose:
+      - "9999"
+    deploy:
+      resources:
+        limits:
+          cpus: "0.7"
+          memory: "1GB"
+

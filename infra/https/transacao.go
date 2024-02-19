@@ -30,10 +30,6 @@ func (p *TransacaoRouter) Load(r *fiber.App) {
 	})
 
 	r.Get("/clientes/:id/extrato", func(c *fiber.Ctx) error {
-		var body app.Transacao
-		if err := c.BodyParser(&body); err != nil {
-			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"erro": "bad request"})
-		}
 		result, err := p.repository.FindUser(c.Params("id"))
 		if err != nil {
 			var notFound *app.ErrorApp
