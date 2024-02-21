@@ -9,7 +9,7 @@ type Scripts struct {
 }
 
 func (s *Scripts) Run() {
-	s.repository.Insert("2", app.User{
+	s.repository.Insert("1", app.User{
 		Id:     "1",
 		Saldo:  0,
 		Limite: 100000,

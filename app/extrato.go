@@ -1,6 +1,8 @@
 package app
 
-import "time"
+import (
+	"time"
+)
 
 type Saldo struct {
 	Total       int       `json:"saldo"`
@@ -20,15 +22,9 @@ type Extrato struct {
 	Transacoes []TransacaoRecente `json:"ultimas_transacoes"`
 }
 
-func Extrair(user *User) Extrato {
+func Extrair(user *User, trasacoeOriginal []*Transacao) Extrato {
 	var transacoes []TransacaoRecente
 	var transacaoRecente *TransacaoRecente
-	var trasacoeOriginal []Transacao
-	if len(trasacoeOriginal) > 10 {
-		trasacoeOriginal = user.Transactions[:10]
-	} else {
-		trasacoeOriginal = user.Transactions
-	}
 	for _, transacao := range trasacoeOriginal {
 		transacaoRecente = &TransacaoRecente{
 			Valor:       transacao.Valor,

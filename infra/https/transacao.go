@@ -25,12 +25,18 @@ func (p *TransacaoRouter) Load(r *fiber.App) {
 			if errors.As(err, &notFound) {
 				return c.Status(fiber.StatusNotFound).Next()
 			}
+			var errorCredit *app.ErrorCredit
+			if errors.As(err, &errorCredit) {
+				return c.Status(fiber.StatusUnprocessableEntity).SendString("Bad Request")
+			}
+
 		}
 		return c.Status(fiber.StatusOK).JSON(result)
 	})
 
 	r.Get("/clientes/:id/extrato", func(c *fiber.Ctx) error {
-		result, err := p.repository.FindUser(c.Params("id"))
+		id := c.Params("id")
+		result, err := p.repository.FindUser(id)
 		if err != nil {
 			var notFound *app.ErrorApp
 			if errors.As(err, &notFound) {
@@ -38,7 +44,9 @@ func (p *TransacaoRouter) Load(r *fiber.App) {
 			}
 		}
 
-		return c.Status(fiber.StatusOK).JSON(app.Extrair(result))
+		transacoes := p.repository.FindLatestTransacao(id)
+
+		return c.Status(fiber.StatusOK).JSON(app.Extrair(result, transacoes))
 	})
 }
 

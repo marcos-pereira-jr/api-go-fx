@@ -9,14 +9,19 @@ services:
     deploy:
       resources:
         limits:
-          cpus: "0.7"
-          memory: "1GB"
+          cpus: "0.5"
+          memory: "200MB"
   db:
     image: mongo
     network_mode: "host"
     environment:
       - MONGO_INITDB_ROOT_USERNAME=root
       - MONGO_INITDB_ROOT_PASSWORD=root    
+    deploy:
+      resources:
+        limits:
+          cpus: "0.5"
+          memory: "200MB"  
   nginx:
     image: nginx
     hostname: api
@@ -28,6 +33,6 @@ services:
     deploy:
       resources:
         limits:
-          cpus: "0.7"
-          memory: "1GB"
+          cpus: "0.5"
+          memory: "150MB"
 

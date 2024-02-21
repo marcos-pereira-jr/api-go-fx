@@ -3,6 +3,7 @@ package datasource
 import (
 	"context"
 	"fmt"
+	"log"
 	"time"
 
 	"github.com/marcos-pereira-jr/rinha-go-fx/app"
@@ -13,12 +14,13 @@ import (
 
 type TransacaoRepository struct {
 	dbClient *mongo.Client
+	users    map[string]app.User
 }
 
 func calcularDebito(user *app.User, transacao app.Transacao) (int, error) {
 	saldo := user.Saldo - transacao.Valor
 	if saldo < -(user.Limite) {
-		return 0, &app.ErrorApp{Message: "Not Found"}
+		return 0, &app.ErrorCredit{Message: "Credito Incosistente"}
 	}
 	return saldo, nil
 }
@@ -34,7 +36,6 @@ func (t *TransacaoRepository) InsertTransaction(id string, transacao app.Transac
 	if errorFind != nil {
 		return nil, errorFind
 	}
-	user.Transactions = append(user.Transactions, transacao)
 	var saldo int
 	if transacao.Tipo == "c" {
 		saldo = calcularCredito(user, transacao)
@@ -52,16 +53,11 @@ func (t *TransacaoRepository) InsertTransaction(id string, transacao app.Transac
 	result.Saldo = saldo
 	user.Saldo = saldo
 
-	coll := t.dbClient.Database("user").Collection("user")
-	update := bson.M{
-		"$push": bson.M{"Transactions": transacao},
-		"$set":  bson.M{"Saldo": saldo},
-	}
-
-	filter := bson.M{"id": id}
-	opts := options.FindOneAndUpdate().SetReturnDocument(options.After)
-	var updatedDocument bson.M
-	err := coll.FindOneAndUpdate(context.TODO(), filter, update, opts).Decode(&updatedDocument)
+	coll := t.dbClient.Database("user").Collection("transacao")
+	_, err := coll.InsertOne(
+		context.TODO(),
+		transacao,
+	)
 	if err != nil {
 		fmt.Print("Erro", err)
 	}
@@ -69,25 +65,37 @@ func (t *TransacaoRepository) InsertTransaction(id string, transacao app.Transac
 }
 
 func (t *TransacaoRepository) Insert(id string, user app.User) error {
-	coll := t.dbClient.Database("user").Collection("user")
-	_, err := coll.InsertOne(
-		context.TODO(),
-		user,
-	)
-	if err != nil {
-		fmt.Print("Erro", err)
-	}
+	t.users[id] = user
 	return nil
 }
 
 func (t *TransacaoRepository) FindUser(id string) (*app.User, error) {
-	coll := t.dbClient.Database("user").Collection("user")
-	var result app.User
-	err := coll.FindOne(context.TODO(), bson.D{{Key: "id", Value: id}}).Decode(&result)
-	if err != nil {
-		return nil, &app.ErrorApp{Message: "Not Found"}
+	if user, exists := t.users[id]; exists {
+		return &user, nil
 	}
-	return &result, nil
+	return nil, &app.ErrorApp{Message: "Not Found"}
+}
+
+func (t *TransacaoRepository) FindLatestTransacao(id string) []*app.Transacao {
+	var results []*app.Transacao
+	coll := t.dbClient.Database("user").Collection("transacao")
+
+	findOptions := options.Find()
+	findOptions.SetSort(bson.D{{"RealizadoEm", -1}})
+	findOptions.SetLimit(10)
+
+	cur, _ := coll.Find(context.TODO(), bson.D{{}}, findOptions)
+	defer cur.Close(context.TODO())
+	for cur.Next(context.TODO()) {
+		var elem app.Transacao
+		err := cur.Decode(&elem)
+		if err != nil {
+			log.Fatal(err)
+		}
+		results = append(results, &elem)
+	}
+
+	return results
 }
 
 func NewTransacaoRepository(
@@ -95,5 +103,6 @@ func NewTransacaoRepository(
 ) *TransacaoRepository {
 	return &TransacaoRepository{
 		dbClient: dbClient,
+		users:    make(map[string]app.User),
 	}
 }

@@ -10,8 +10,7 @@ type Transacao struct {
 }
 
 type User struct {
-	Id           string
-	Transactions []Transacao
-	Saldo        int
-	Limite       int
+	Id     string
+	Saldo  int
+	Limite int
 }
