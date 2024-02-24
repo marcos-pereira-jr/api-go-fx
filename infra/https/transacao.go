@@ -17,7 +17,7 @@ func (p *TransacaoRouter) Load(r *fiber.App) {
 	r.Post("/clientes/:id/transacoes", func(c *fiber.Ctx) error {
 		var body app.Transacao
 		if err := c.BodyParser(&body); err != nil {
-			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"erro": "bad request"})
+			return c.Status(fiber.StatusUnprocessableEntity).JSON(fiber.Map{"erro": "bad request"})
 		}
 		result, err := p.repository.InsertTransaction(c.Params("id"), body)
 		if err != nil {
@@ -44,7 +44,7 @@ func (p *TransacaoRouter) Load(r *fiber.App) {
 			}
 		}
 
-		transacoes := p.repository.FindLatestTransacao(id)
+		transacoes := p.repository.FindLatestTransacao(id, 10)
 
 		return c.Status(fiber.StatusOK).JSON(app.Extrair(result, transacoes))
 	})

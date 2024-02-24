@@ -5,7 +5,7 @@ import (
 )
 
 type Saldo struct {
-	Total       int       `json:"saldo"`
+	Total       int       `json:"total"`
 	DataExtrato time.Time `json:"data_extrato"`
 	Limite      int       `json:"limite"`
 }
@@ -25,7 +25,11 @@ type Extrato struct {
 func Extrair(user *User, trasacoeOriginal []*Transacao) Extrato {
 	var transacoes []TransacaoRecente
 	var transacaoRecente *TransacaoRecente
-	for _, transacao := range trasacoeOriginal {
+	var total int
+	for i, transacao := range trasacoeOriginal {
+		if i == 0 {
+			total = transacao.Saldo
+		}
 		transacaoRecente = &TransacaoRecente{
 			Valor:       transacao.Valor,
 			Tipo:        transacao.Tipo,
@@ -36,7 +40,7 @@ func Extrair(user *User, trasacoeOriginal []*Transacao) Extrato {
 	}
 
 	saldo := &Saldo{
-		Total:       user.Saldo,
+		Total:       total,
 		DataExtrato: time.Now(),
 		Limite:      user.Limite,
 	}

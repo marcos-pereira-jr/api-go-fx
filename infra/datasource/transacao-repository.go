@@ -17,33 +17,46 @@ type TransacaoRepository struct {
 	users    map[string]app.User
 }
 
-func calcularDebito(user *app.User, transacao app.Transacao) (int, error) {
-	saldo := user.Saldo - transacao.Valor
-	if saldo < -(user.Limite) {
+func calcularDebito(lastSaldo int, limite int, transacao app.Transacao) (int, error) {
+	saldo := lastSaldo - transacao.Valor
+	if saldo < -(limite) {
 		return 0, &app.ErrorCredit{Message: "Credito Incosistente"}
 	}
 	return saldo, nil
 }
 
-func calcularCredito(user *app.User, transacao app.Transacao) int {
-	return user.Saldo + transacao.Valor
+func calcularCredito(lastSaldo int, transacao app.Transacao) int {
+	return lastSaldo + transacao.Valor
 }
 
 func (t *TransacaoRepository) InsertTransaction(id string, transacao app.Transacao) (*app.Result, error) {
 	var result app.Result
-	transacao.RealizadoEm = time.Now()
-	user, errorFind := t.FindUser(id)
-	if errorFind != nil {
-		return nil, errorFind
+	if transacao.Tipo != "d" && transacao.Tipo != "c" {
+		return nil, &app.ErrorCredit{Message: "Credito Incosistente"}
+
 	}
+	transacao.RealizadoEm = time.Now()
+	lastTrasacao := t.FindLatestTransacao(id, 1)
+
+	user, errorFindUser := t.FindUser(id)
+	if errorFindUser != nil {
+		return nil, errorFindUser
+	}
+	var lastSaldo int
+	if lastTrasacao != nil {
+		lastSaldo = lastTrasacao[0].Saldo
+	} else {
+		lastSaldo = 0
+	}
+
 	var saldo int
 	if transacao.Tipo == "c" {
-		saldo = calcularCredito(user, transacao)
+		saldo = calcularCredito(lastSaldo, transacao)
 	}
 
 	if transacao.Tipo == "d" {
 		var errorCredito error
-		saldo, errorCredito = calcularDebito(user, transacao)
+		saldo, errorCredito = calcularDebito(lastSaldo, user.Limite, transacao)
 		if errorCredito != nil {
 			return nil, errorCredito
 		}
@@ -51,7 +64,7 @@ func (t *TransacaoRepository) InsertTransaction(id string, transacao app.Transac
 
 	result.Limite = user.Limite
 	result.Saldo = saldo
-	user.Saldo = saldo
+	transacao.Saldo = saldo
 
 	coll := t.dbClient.Database("user").Collection("transacao")
 	_, err := coll.InsertOne(
@@ -68,7 +81,6 @@ func (t *TransacaoRepository) Insert(id string, user app.User) error {
 	t.users[id] = user
 	return nil
 }
-
 func (t *TransacaoRepository) FindUser(id string) (*app.User, error) {
 	if user, exists := t.users[id]; exists {
 		return &user, nil
@@ -76,13 +88,13 @@ func (t *TransacaoRepository) FindUser(id string) (*app.User, error) {
 	return nil, &app.ErrorApp{Message: "Not Found"}
 }
 
-func (t *TransacaoRepository) FindLatestTransacao(id string) []*app.Transacao {
+func (t *TransacaoRepository) FindLatestTransacao(id string, qtd int64) []*app.Transacao {
 	var results []*app.Transacao
 	coll := t.dbClient.Database("user").Collection("transacao")
 
 	findOptions := options.Find()
 	findOptions.SetSort(bson.D{{"RealizadoEm", -1}})
-	findOptions.SetLimit(10)
+	findOptions.SetLimit(qtd)
 
 	cur, _ := coll.Find(context.TODO(), bson.D{{}}, findOptions)
 	defer cur.Close(context.TODO())
