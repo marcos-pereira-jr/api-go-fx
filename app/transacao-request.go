@@ -6,6 +6,7 @@ type Transacao struct {
 	Valor       int    `json:"valor"`
 	Tipo        string `json:"tipo"`
 	Descricao   string `json:"descricao"`
+	IdUser      string
 	Saldo       int
 	RealizadoEm time.Time
 }

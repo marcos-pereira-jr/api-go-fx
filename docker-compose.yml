@@ -1,16 +1,24 @@
 version: "3.5"
 services:
-  app:
+  app1: &api
     build: .
     expose:
       - "8080"
     network_mode: "host"
     restart: always
+    environment:
+      - PORT=8080
+      - TIMEOUT=5000
     deploy:
       resources:
         limits:
-          cpus: "0.5"
-          memory: "200MB"
+           cpus: "2.5"
+           memory: "500MB"
+  app2:
+    <<: *api
+    environment:
+      - PORT=8081
+      - TIMEOUT=5000
   db:
     image: mongo
     network_mode: "host"
@@ -20,8 +28,8 @@ services:
     deploy:
       resources:
         limits:
-          cpus: "0.5"
-          memory: "200MB"  
+          cpus: "1.5"
+          memory: "500MB"  
   nginx:
     image: nginx
     hostname: api
@@ -33,6 +41,6 @@ services:
     deploy:
       resources:
         limits:
-          cpus: "0.5"
+          cpus: "1.5"
           memory: "150MB"
 
