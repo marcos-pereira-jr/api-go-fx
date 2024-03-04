@@ -22,7 +22,7 @@ type Extrato struct {
 	Transacoes []TransacaoRecente `json:"ultimas_transacoes"`
 }
 
-func Extrair(user *User, trasacoeOriginal []*Transacao) Extrato {
+func Extrair(trasacoeOriginal []Transacao) Extrato {
 	var transacoes []TransacaoRecente
 	var transacaoRecente *TransacaoRecente
 	var total int
@@ -42,7 +42,7 @@ func Extrair(user *User, trasacoeOriginal []*Transacao) Extrato {
 	saldo := &Saldo{
 		Total:       total,
 		DataExtrato: time.Now(),
-		Limite:      user.Limite,
+		Limite:      1200002,
 	}
 
 	extrato := &Extrato{

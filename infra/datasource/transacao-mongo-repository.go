@@ -13,7 +13,7 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
-type TransacaoRepository struct {
+type TransacaoMongoRepository struct {
 	dbClient *mongo.Client
 	users    map[string]app.User
 	config   *config.Config
@@ -31,7 +31,7 @@ func calcularCredito(lastSaldo int, transacao app.Transacao) int {
 	return lastSaldo + transacao.Valor
 }
 
-func (t *TransacaoRepository) InsertTransaction(id string, transacao app.Transacao) (*app.Result, error) {
+func (t *TransacaoMongoRepository) InsertTransaction(id string, transacao app.Transacao) (*app.Result, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 	coll := t.dbClient.Database("user").Collection("transacao")
@@ -79,7 +79,7 @@ func (t *TransacaoRepository) InsertTransaction(id string, transacao app.Transac
 	return &result, nil
 }
 
-func (t *TransacaoRepository) AsyncInsert(transacao app.Transacao) {
+func (t *TransacaoMongoRepository) AsyncInsert(transacao app.Transacao) {
 	ctx, cancel := context.WithTimeout(context.Background(), 100*time.Second)
 	defer cancel()
 	coll := t.dbClient.Database("user").Collection("transacao")
@@ -93,18 +93,18 @@ func (t *TransacaoRepository) AsyncInsert(transacao app.Transacao) {
 	}
 }
 
-func (t *TransacaoRepository) Insert(id string, user app.User) error {
+func (t *TransacaoMongoRepository) Insert(id string, user app.User) error {
 	t.users[id] = user
 	return nil
 }
-func (t *TransacaoRepository) FindUser(id string) (*app.User, error) {
+func (t *TransacaoMongoRepository) FindUser(id string) (*app.User, error) {
 	if user, exists := t.users[id]; exists {
 		return &user, nil
 	}
 	return nil, &app.ErrorApp{Message: "Not Found"}
 }
 
-func (t *TransacaoRepository) FindLatestTransacao(id string, qtd int64) []*app.Transacao {
+func (t *TransacaoMongoRepository) FindLatestTransacao(id string, qtd int64) []*app.Transacao {
 	var results []*app.Transacao
 	coll := t.dbClient.Database("user").Collection("transacao")
 
@@ -129,8 +129,8 @@ func (t *TransacaoRepository) FindLatestTransacao(id string, qtd int64) []*app.T
 func NewTransacaoRepository(
 	dbClient *mongo.Client,
 	config *config.Config,
-) *TransacaoRepository {
-	return &TransacaoRepository{
+) *TransacaoMongoRepository {
+	return &TransacaoMongoRepository{
 		dbClient: dbClient,
 		users:    make(map[string]app.User),
 		config:   config,

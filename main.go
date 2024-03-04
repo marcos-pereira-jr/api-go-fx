@@ -2,8 +2,8 @@ package main
 
 import (
 	"github.com/marcos-pereira-jr/rinha-go-fx/infra/config"
-	"github.com/marcos-pereira-jr/rinha-go-fx/infra/datasource"
 	"github.com/marcos-pereira-jr/rinha-go-fx/infra/https"
+	"github.com/marcos-pereira-jr/rinha-go-fx/infra/inmemory"
 	"github.com/valyala/fasthttp"
 	"go.uber.org/fx"
 )
@@ -11,12 +11,12 @@ import (
 func main() {
 	app := fx.New(
 		https.Module,
-		datasource.Module,
 		config.Module,
-		fx.Invoke(func(*fasthttp.Server) {}),
-		fx.Invoke(func(scripts *datasource.Scripts) {
+		inmemory.Module,
+		fx.Invoke(func(scripts *inmemory.Scripts) {
 			scripts.Run()
 		}),
+		fx.Invoke(func(*fasthttp.Server) {}),
 	)
 	app.Run()
 }

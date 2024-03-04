@@ -3,14 +3,12 @@ package https
 import (
 	"errors"
 
-	"github.com/marcos-pereira-jr/rinha-go-fx/app"
-	"github.com/marcos-pereira-jr/rinha-go-fx/infra/datasource"
-
 	"github.com/gofiber/fiber/v2"
+	"github.com/marcos-pereira-jr/rinha-go-fx/app"
 )
 
 type TransacaoRouter struct {
-	repository *datasource.TransacaoRepository
+	repository app.TransacaoRepository
 }
 
 func (p *TransacaoRouter) Load(r *fiber.App) {
@@ -19,7 +17,7 @@ func (p *TransacaoRouter) Load(r *fiber.App) {
 		if err := c.BodyParser(&body); err != nil {
 			return c.Status(fiber.StatusUnprocessableEntity).JSON(fiber.Map{"erro": "bad request"})
 		}
-		result, err := p.repository.InsertTransaction(c.Params("id"), body)
+		result, err := p.repository.AddTransacao(c.Params("id"), body)
 		if err != nil {
 			var notFound *app.ErrorApp
 			if errors.As(err, &notFound) {
@@ -36,22 +34,19 @@ func (p *TransacaoRouter) Load(r *fiber.App) {
 
 	r.Get("/clientes/:id/extrato", func(c *fiber.Ctx) error {
 		id := c.Params("id")
-		result, err := p.repository.FindUser(id)
+		result, err := p.repository.Extrato(id)
 		if err != nil {
 			var notFound *app.ErrorApp
 			if errors.As(err, &notFound) {
 				return c.Status(fiber.StatusNotFound).Next()
 			}
 		}
-
-		transacoes := p.repository.FindLatestTransacao(id, 10)
-
-		return c.Status(fiber.StatusOK).JSON(app.Extrair(result, transacoes))
+		return c.Status(fiber.StatusOK).JSON(app.Extrair(result))
 	})
 }
 
 func NewTransacaoRouter(
-	repository *datasource.TransacaoRepository,
+	repository app.TransacaoRepository,
 ) *TransacaoRouter {
 	return &TransacaoRouter{
 		repository: repository,
